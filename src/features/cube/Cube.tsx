@@ -2,12 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Texture } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-
-interface IMember {
-	id: number | string;
-	name: string;
-	color: string;
-}
+import { IMember } from '../../types/IMember';
 
 const members: IMember[] = [
 	{ id: 1, name: 'Ратибор', color: 'rgba(116, 185, 255,1.0)' },
