@@ -13,7 +13,7 @@ interface EditableRowProps {
 	index: number;
 }
 
-const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
+const EditableRow: React.FC<EditableRowProps> = ({ ...props }) => {
 	const [form] = Form.useForm();
 	return (
 		<Form form={form} component={false}>
@@ -30,6 +30,7 @@ interface EditableCellProps {
 	children: React.ReactNode;
 	dataIndex: keyof IMember;
 	record: IMember;
+	// eslint-disable-next-line no-unused-vars
 	handleSave: (record: IMember) => void;
 }
 
@@ -123,7 +124,7 @@ const MemberList = () => {
 			render: (_, record: { id: React.Key }) =>
 				memberStore.members.length >= 1 ? (
 					<Popconfirm title='Sure to delete?' onConfirm={() => handleDelete(record.id)}>
-						<a>Delete</a>
+						<Button type='link'>Delete</Button>
 					</Popconfirm>
 				) : null,
 		},
@@ -139,7 +140,7 @@ const MemberList = () => {
 			name: `Участник ${count + 1}`,
 			color: getRandomColor(memberStore.members),
 		};
-		memberStore.setMembers([...memberStore.members, newData]);
+		memberStore.setMembers([newData, ...memberStore.members]);
 	};
 
 	const handleSave = (row: IMember) => {
@@ -183,7 +184,7 @@ const MemberList = () => {
 	return (
 		<div>
 			<Button
-				disabled={memberStore.members.length > 5}
+				disabled={memberStore.members.length > 300}
 				onClick={handleAdd}
 				style={{ marginBottom: 16 }}
 				icon={<UserAddOutlined />}

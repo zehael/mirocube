@@ -16,7 +16,7 @@ const MemberPage = () => {
 			<Content className='layout__content'>
 				<MemberList />
 				<div className='member__action-wrapper'>
-					<Button disabled={memberStore.members.length < 4} type='primary' onClick={() => navigate('/cube')}>
+					<Button disabled={memberStore.members.length < 6} type='primary' onClick={() => navigate('/cube')}>
 						Продолжить
 					</Button>
 				</div>

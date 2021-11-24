@@ -1,0 +1,43 @@
+.cube {
+
+  &__action {
+    position: absolute;
+    height: 50px;
+    width: 100%;
+    left: 0;
+    bottom: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__selected {
+    position: absolute;
+    height: 50px;
+    width: 100%;
+    left: 0;
+    top: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    strong {
+      margin-left: 10px;
+      font-weight: bold;
+      color: #f35626;
+      background-image: -webkit-linear-gradient(92deg, #f35626, #feab3a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-animation: hue 10s infinite linear;
+    }
+
+    @keyframes hue {
+      from {
+        -webkit-filter: hue-rotate(0deg);
+      }
+      to {
+        -webkit-filter: hue-rotate(-360deg);
+      }
+    }
+  }
+}
