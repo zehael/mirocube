@@ -1,0 +1,15 @@
+.member {
+  &__action-wrapper {
+    display: flex;
+    margin: 30px 0 16px;
+    align-items: center;
+    justify-content: center;
+  }
+
+
+  .editable-cell-value-wrap {
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}

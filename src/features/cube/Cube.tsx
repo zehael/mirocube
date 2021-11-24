@@ -1,20 +1,16 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Texture } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { observer } from 'mobx-react-lite';
+import { useNavigate } from 'react-router-dom';
+import { Button } from 'antd';
 import { IMember } from '../../types/IMember';
-
-const members: IMember[] = [
-	{ id: 1, name: 'Ратибор', color: 'rgba(116, 185, 255,1.0)' },
-	{ id: 2, name: 'Лина', color: 'rgba(108, 92, 231,9.0)' },
-	{ id: 3, name: 'Кирилл', color: 'rgba(253, 121, 168,8.0)' },
-	{ id: 4, name: 'Антон', color: 'rgba(26, 188, 156,9.0)' },
-	{ id: 5, name: 'Андрей', color: 'rgba(46, 204, 113,7.0)' },
-	{ id: 6, name: 'Иван', color: 'rgba(41, 128, 185,9.0)' },
-	{ id: 7, name: 'Дарья', color: 'rgba(155, 89, 182,1.0)' },
-];
+import { Context } from '../../index';
 
 const Cube = () => {
+	const navigate = useNavigate();
+	const { memberStore } = useContext(Context);
 	const mount = useRef<HTMLDivElement>(null);
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -23,15 +19,20 @@ const Cube = () => {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	const controls = new OrbitControls(camera, renderer.domElement);
 	const geometry = new THREE.BoxGeometry();
+	let cube = new THREE.Mesh(geometry, []);
 
 	useEffect(() => {
-		initScene();
+		if (memberStore.members.length === 0) {
+			navigate('/');
+		} else {
+			initScene();
+		}
 	}, []);
 
 	const initScene = async () => {
 		if (mount.current === null) return;
 		const materials = await fillMaterials();
-		const cube = new THREE.Mesh(geometry, materials);
+		cube = new THREE.Mesh(geometry, materials);
 		scene.add(cube);
 		camera.position.z = 3;
 		controls.update();
@@ -51,10 +52,50 @@ const Cube = () => {
 		animate();
 	};
 
-	async function fillMaterials(): Promise<THREE.MeshBasicMaterial[]> {
+	async function updateMaterials(): Promise<void> {
+		const members: IMember[] = [
+			{ id: 1, name: 'Ратибор', color: 'rgba(116, 185, 255,1.0)' },
+			{ id: 2, name: 'Лина', color: 'rgba(108, 92, 231,9.0)' },
+			{ id: 3, name: 'Кирилл', color: 'rgba(253, 121, 168,8.0)' },
+			{ id: 4, name: 'Антон', color: 'rgba(26, 188, 156,9.0)' },
+			{ id: 5, name: 'Андрей', color: 'rgba(46, 204, 113,7.0)' },
+			{ id: 6, name: 'Иван', color: 'rgba(41, 128, 185,9.0)' },
+			{ id: 7, name: 'Дарья', color: 'rgba(155, 89, 182,1.0)' },
+		];
+
 		const materials: THREE.MeshBasicMaterial[] = [];
 		// eslint-disable-next-line no-restricted-syntax
 		for (const member of members) {
+			// eslint-disable-next-line no-await-in-loop
+			const canvasTexture = await createTextureWithText(member);
+			let texture: Texture = new Texture();
+			if (canvasTexture) {
+				texture = canvasTexture;
+			}
+			const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+			materials.push(material);
+		}
+
+		cube = new THREE.Mesh(geometry, materials);
+		camera.position.z = 3;
+		controls.update();
+		const animate = () => {
+			requestAnimationFrame(animate);
+
+			cube.rotation.x += 0.01;
+			cube.rotation.y += 0.01;
+
+			controls.update();
+
+			renderer.render(scene, camera);
+		};
+		animate();
+	}
+
+	async function fillMaterials(): Promise<THREE.MeshBasicMaterial[]> {
+		const materials: THREE.MeshBasicMaterial[] = [];
+		// eslint-disable-next-line no-restricted-syntax
+		for (const member of memberStore.members) {
 			// eslint-disable-next-line no-await-in-loop
 			const canvasTexture = await createTextureWithText(member);
 			let texture: Texture = new Texture();
@@ -119,7 +160,16 @@ const Cube = () => {
 		canvasContext.fillText(text, posX, posY);
 	}
 
-	return <div ref={mount} />;
+	return (
+		<div>
+			<div className='action'>
+				<Button type='primary' onClick={() => updateMaterials()}>
+					Update
+				</Button>
+			</div>
+			<div ref={mount} />;
+		</div>
+	);
 };
 
-export default Cube;
+export default observer(Cube);

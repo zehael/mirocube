@@ -1,17 +1,13 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { Table, Input, Button, Popconfirm, Form } from 'antd';
+import { Table, Input, Button, Popconfirm, Form, Avatar } from 'antd';
 import { FormInstance } from 'antd/lib/form';
+import { observer } from 'mobx-react-lite';
+import { UserAddOutlined } from '@ant-design/icons';
 import { IMember } from '../../types/IMember';
 import getRandomColor from '../../utils/colorGenerator';
+import { Context } from '../../index';
 
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
-
-interface Item {
-	key: string;
-	name: string;
-	age: string;
-	address: string;
-}
 
 interface EditableRowProps {
 	index: number;
@@ -32,9 +28,9 @@ interface EditableCellProps {
 	title: React.ReactNode;
 	editable: boolean;
 	children: React.ReactNode;
-	dataIndex: keyof Item;
-	record: Item;
-	handleSave: (record: Item) => void;
+	dataIndex: keyof IMember;
+	record: IMember;
+	handleSave: (record: IMember) => void;
 }
 
 const EditableCell: React.FC<EditableCellProps> = ({
@@ -82,11 +78,11 @@ const EditableCell: React.FC<EditableCellProps> = ({
 				rules={[
 					{
 						required: true,
-						message: `${title} is required.`,
+						message: `${title} обязательно для заполнения.`,
 					},
 				]}
 			>
-				<Input ref={inputRef} onPressEnter={save} onBlur={save} />
+				<Input className='table-input' ref={inputRef} onPressEnter={save} onBlur={save} />
 			</Form.Item>
 		) : (
 			// eslint-disable-next-line jsx-a11y/no-static-element-interactions
@@ -104,16 +100,8 @@ type EditableTableProps = Parameters<typeof Table>[0];
 type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>;
 
 const MemberList = () => {
-	const [count, setCount] = useState<number>(2);
-	const [dataMembers, setDataMembers] = useState<IMember[]>([
-		{ id: 1, name: 'Ратибор', color: 'rgba(116, 185, 255,1.0)' },
-		{ id: 2, name: 'Лина', color: 'rgba(108, 92, 231,9.0)' },
-		{ id: 3, name: 'Кирилл', color: 'rgba(253, 121, 168,8.0)' },
-		{ id: 4, name: 'Антон', color: 'rgba(26, 188, 156,9.0)' },
-		{ id: 5, name: 'Андрей', color: 'rgba(46, 204, 113,7.0)' },
-		{ id: 6, name: 'Иван', color: 'rgba(41, 128, 185,9.0)' },
-		{ id: 7, name: 'Дарья', color: 'rgba(155, 89, 182,1.0)' },
-	]);
+	const { memberStore } = useContext(Context);
+	const [count, setCount] = useState<number>(0);
 	const columns = [
 		{
 			title: 'Имя',
@@ -122,11 +110,18 @@ const MemberList = () => {
 			editable: true,
 		},
 		{
+			title: 'Color',
+			dataIndex: 'color',
+			width: 100,
+			align: 'center',
+			render: text => <Avatar style={{ backgroundColor: text }} size={48} shape='circle' />,
+		},
+		{
 			title: 'Действия',
 			dataIndex: 'operation',
 			align: 'right',
 			render: (_, record: { id: React.Key }) =>
-				dataMembers.length >= 1 ? (
+				memberStore.members.length >= 1 ? (
 					<Popconfirm title='Sure to delete?' onConfirm={() => handleDelete(record.id)}>
 						<a>Delete</a>
 					</Popconfirm>
@@ -134,30 +129,32 @@ const MemberList = () => {
 		},
 	];
 
-	const handleDelete = (key: number | string | React.Key) => {
-		console.log('delete Key', key);
-		setDataMembers([...dataMembers.filter(member => member.id !== key)]);
-	};
+	useEffect(() => {
+		setCount(memberStore.members.length);
+	}, [memberStore.members]);
 
 	const handleAdd = () => {
 		const newData: IMember = {
-			id: count,
+			id: Date.now(),
 			name: `Участник ${count + 1}`,
-			color: getRandomColor(),
+			color: getRandomColor(memberStore.members),
 		};
-		setDataMembers([...dataMembers, newData]);
-		setCount(count + 1);
+		memberStore.setMembers([...memberStore.members, newData]);
 	};
 
 	const handleSave = (row: IMember) => {
-		const newData = [...dataMembers];
+		const newData = [...memberStore.members];
 		const index = newData.findIndex(item => row.id === item.id);
 		const item = newData[index];
 		newData.splice(index, 1, {
 			...item,
 			...row,
 		});
-		setDataMembers(newData);
+		memberStore.setMembers(newData);
+	};
+
+	const handleDelete = (key: number | string | React.Key) => {
+		memberStore.setMembers([...memberStore.members.filter(member => member.id !== key)]);
 	};
 
 	const components = {
@@ -185,20 +182,26 @@ const MemberList = () => {
 
 	return (
 		<div>
-			<Button onClick={handleAdd} type='primary' style={{ marginBottom: 16 }}>
+			<Button
+				disabled={memberStore.members.length > 5}
+				onClick={handleAdd}
+				style={{ marginBottom: 16 }}
+				icon={<UserAddOutlined />}
+			>
 				Добавить участника
 			</Button>
 			<Table
+				id='table'
 				rowKey='id'
 				components={components}
 				rowClassName={() => 'editable-row'}
 				bordered
 				pagination={false}
-				dataSource={dataMembers}
+				dataSource={memberStore.members}
 				columns={tableColumns as ColumnTypes}
 			/>
 		</div>
 	);
 };
 
-export default MemberList;
+export default observer(MemberList);

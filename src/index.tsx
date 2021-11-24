@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { createContext } from 'react';
 import ReactDOM from 'react-dom';
 import './styles/index.scss';
 import App from './App';
+import MemberStore from './store/MemberStore';
+
+interface RootState {
+	memberStore: MemberStore;
+}
+
+const memberStore = new MemberStore();
+
+// eslint-disable-next-line import/prefer-default-export
+export const Context = createContext<RootState>({
+	memberStore,
+});
 
 ReactDOM.render(
-	<React.StrictMode>
+	// eslint-disable-next-line react/jsx-no-constructed-context-values
+	<Context.Provider value={{ memberStore }}>
 		<App />
-	</React.StrictMode>,
+	</Context.Provider>,
 	document.getElementById('root')
 );
 
