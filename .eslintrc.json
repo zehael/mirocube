@@ -83,7 +83,8 @@
 		],
 		"no-return-await": "off",
 		"prettier/prettier": "warn",
-		"react/function-component-definition": 0
+		"react/function-component-definition": 0,
+		"no-plusplus": 0
 	},
 	"settings": {
 		"import/resolver": {

@@ -11,7 +11,6 @@ export default class MemberStore {
 	}
 
 	setMembers(payload: IMember[]) {
-		console.log('try set members', payload);
 		this.members = payload;
 	}
 

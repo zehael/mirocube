@@ -23,6 +23,7 @@ const Cube = () => {
 	let lastMaterialIndex: number = 0;
 	let lastXCord: number = 0;
 	let rotationSpeed: number = 0.01;
+	let currentMembers: IMember[] = [];
 	const [randomMember, setRandomMember] = useState<IMember | null>(null);
 
 	useEffect(() => {
@@ -36,7 +37,6 @@ const Cube = () => {
 	const initScene = async () => {
 		if (mount.current === null) return;
 		const firstMembers = [...memberStore.members].slice(0, 6);
-		console.log('first materials for members', firstMembers);
 		const materials = await createTexturesMeshMaterials(firstMembers);
 		lastMaterialIndex = 6;
 		cube = new THREE.Mesh(geometry, materials);
@@ -60,7 +60,6 @@ const Cube = () => {
 		const { x } = cube.rotation;
 		const materialIsEnumerated = lastMaterialIndex >= memberStore.members.length;
 		if (x >= lastXCord + 2 && !materialIsEnumerated) {
-			console.log('need updated material', lastMaterialIndex);
 			lastMaterialIndex += 1;
 			lastXCord = x;
 			updateMaterials();
@@ -70,6 +69,7 @@ const Cube = () => {
 	const rollDice = async () => {
 		const firstMembers = [...memberStore.members].slice(0, 6);
 		const materials = await createTexturesMeshMaterials(firstMembers);
+		currentMembers = firstMembers;
 		cube.material = materials;
 		lastMaterialIndex = 6;
 		rotationSpeed = 0.1;
@@ -77,23 +77,51 @@ const Cube = () => {
 	};
 
 	const selectRandomMember = async () => {
-		const newRandomMember = memberStore.members[Math.floor(Math.random() * memberStore.members.length)];
-		const texture = await createTextureWithText(newRandomMember);
+		const selectedMember = memberStore.members[Math.floor(Math.random() * memberStore.members.length)];
+		const texture = await createTextureWithText(selectedMember);
 		const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
 		cube.material[4] = material;
 		cube.rotation.x = 0;
 		cube.rotation.y = 0;
 		rotationSpeed = 0;
-		setRandomMember(newRandomMember);
+		setRandomMember(selectedMember);
+		await handleMemberIsExists(selectedMember);
 	};
+
+	const handleMemberIsExists = async (selectedMember: IMember) => {
+		if (!memberIsExistsInCurrent(selectedMember)) return;
+		const idx = currentMembers.findIndex(item => selectedMember.id === item.id);
+		currentMembers[4] = selectedMember;
+		const unusedMember = getUnusedMember();
+		if (unusedMember) {
+			const texture = await createTextureWithText(unusedMember);
+			const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+			cube.material[idx] = material;
+		}
+	};
+
+	function getUnusedMember() {
+		let unusedMember: IMember | null = null;
+		for (let i = 0; i < memberStore.members.length; i++) {
+			const member = memberStore.members[i];
+			if (!memberIsExistsInCurrent(member)) {
+				unusedMember = member;
+				break;
+			}
+		}
+		return unusedMember;
+	}
+
+	function memberIsExistsInCurrent(member: IMember): boolean {
+		return currentMembers.findIndex(item => item.id === member.id) >= 0;
+	}
 
 	async function updateMaterials(): Promise<void> {
 		const members = [...memberStore.members].slice(lastMaterialIndex - 6, lastMaterialIndex);
-		console.log('create materials for members', members);
+		currentMembers = members;
 		const materials = await createTexturesMeshMaterials(members);
 		cube.material = materials;
 		controls.update();
-		// renderer.render(scene, camera);
 	}
 
 	async function createTexturesMeshMaterials(members: IMember[]): Promise<THREE.MeshBasicMaterial[]> {
